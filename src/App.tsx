@@ -1,7 +1,8 @@
-import React, { useCallback } from 'react'
-import styled from 'styled-components'
-import { Button, Title } from '@gnosis.pm/safe-react-components'
 import { useSafeAppsSDK } from '@safe-global/safe-apps-react-sdk'
+import React, { useMemo } from 'react'
+import styled from 'styled-components'
+import getKadoNetworkForChainId from './utils/get-kado-network-for-chain-id'
+import getProductsForKadoNetwork from './utils/get-products-for-kado-network'
 
 const Container = styled.div`
   padding: 1rem;
@@ -13,45 +14,33 @@ const Container = styled.div`
   flex-direction: column;
 `
 
-const Link = styled.a`
-  margin-top: 8px;
-`
+const SafeKadoMoneyApp = (): React.ReactElement => {
+  const { safe } = useSafeAppsSDK()
+  const network = getKadoNetworkForChainId(safe.chainId)
+  const products = getProductsForKadoNetwork(network)
 
-const SafeApp = (): React.ReactElement => {
-  const { sdk, safe } = useSafeAppsSDK()
-
-  const submitTx = useCallback(async () => {
-    try {
-      const { safeTxHash } = await sdk.txs.send({
-        txs: [
-          {
-            to: safe.safeAddress,
-            value: '0',
-            data: '0x',
-          },
-        ],
-      })
-      console.log({ safeTxHash })
-      const safeTx = await sdk.txs.getBySafeTxHash(safeTxHash)
-      console.log({ safeTx })
-    } catch (e) {
-      console.error(e)
-    }
-  }, [safe, sdk])
+  const params = useMemo(() => {
+    return new URLSearchParams({
+      apiKey: process.env.REACT_APP_KADO_WIDGET_API_KEY,
+      onToLocked: '1', // looks like it doesn't work
+      networkList: [network].join(','),
+      onToAddress: safe.safeAddress,
+      network,
+      productList: products.join(','),
+    })
+  }, [network, products, safe.safeAddress])
 
   return (
     <Container>
-      <Title size="md">Safe: {safe.safeAddress}</Title>
-
-      <Button size="lg" color="primary" onClick={submitTx}>
-        Click to send a test transaction
-      </Button>
-
-      <Link href="https://github.com/safe-global/safe-apps-sdk" target="_blank" rel="noreferrer">
-        Documentation
-      </Link>
+      <iframe
+        title="Kado Money Widget"
+        src={`https://app.kado.money/?${params.toString()}`}
+        width="500"
+        height="686"
+        frameBorder={0}
+      />
     </Container>
   )
 }
 
-export default SafeApp
+export default SafeKadoMoneyApp
