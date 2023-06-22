@@ -22,10 +22,11 @@ const SafeKadoMoneyApp = (): React.ReactElement => {
   const params = useMemo(() => {
     return new URLSearchParams({
       apiKey: process.env.REACT_APP_KADO_WIDGET_API_KEY,
-      onToLocked: '1', // looks like it doesn't work
+      onToAddressMulti: `${network}:${safe.safeAddress}`,
       networkList: [network].join(','),
       onToAddress: safe.safeAddress,
       network,
+      onRevCurrency: 'USDC',
       productList: products.join(','),
     })
   }, [network, products, safe.safeAddress])
